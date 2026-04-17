@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nube de Palabras en Vivo</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/wordcloud2.js/1.2.2/wordcloud2.min.js"></script>
+    <style>
+        body { 
+            margin: 0; 
+            background-color: #1a1a1a; /* Fondo oscuro tipo Mentimeter */
+            color: white; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden; 
+        }
+        #canvas-container { 
+            width: 100vw; 
+            height: 100vh; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+        }
+        canvas { 
+            width: 90%; 
+            height: 90%; 
+        }
+        .status {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            font-size: 12px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="canvas-container">
+        <canvas id="nube-canvas"></canvas>
+    </div>
+    <div class="status" id="status">Cargando datos...</div>
+
+    <script>
+        // 1. PEGA AQUÍ TU URL DE GOOGLE APPS SCRIPT
+        const scriptURL = 'TU_URL_DE_APPS_SCRIPT_AQUI';
+
+        async function dibujarNube() {
+            document.getElementById('status').innerText = "Actualizando...";
+            try {
+                const response = await fetch(scriptURL);
+                const list = await response.json(); // Recibe el array [palabra, hits]
+
+                if (list.length === 0) {
+                    document.getElementById('status').innerText = "Esperando respuestas del Form...";
+                    return;
+                }
+
+                // Ajuste de tamaño automático
+                const maxHits = Math.max(...list.map(d => d[1]));
+                // Factor para que las palabras no se salgan de la pantalla
+                const factor = (window.innerWidth < 600) ? 15 : 30;
+                const weightFactor = (factor / maxHits);
+
+                WordCloud(document.getElementById('nube-canvas'), {
+                    list: list,
+                    gridSize: 10,
+                    weightFactor: weightFactor,
+                    color: 'random-light', // Colores brillantes sobre fondo oscuro
+                    rotateRatio: 0.3,
+                    rotationSteps: 2,
+                    backgroundColor: '#1a1a1a',
+                    shuffle: false,
+                    fontFamily: 'Impact, sans-serif'
+                });
+
+                document.getElementById('status').innerText = "Última actualización: " + new Date().toLocaleTimeString();
+            } catch (error) {
+                console.error("Error:", error);
+                document.getElementById('status').innerText = "Error de conexión";
+            }
+        }
+
+        // Ejecutar al abrir
+        dibujarNube();
+
+        // Refrescar cada 30 segundos automáticamente
+        setInterval(dibujarNube, 30000);
+    </script>
+</body>
+</html>
