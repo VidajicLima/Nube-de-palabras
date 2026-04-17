@@ -3,33 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nube de Palabras en Vivo</title>
+    <title>Nube de Palabras Arena Viva</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/wordcloud2.js/1.2.2/wordcloud2.min.js"></script>
     <style>
         body { 
             margin: 0; 
-            background-color: #1a1a1a; /* Fondo oscuro tipo Mentimeter */
+            background-color: #1a1a1a; 
             color: white; 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             overflow: hidden; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
         #canvas-container { 
             width: 100vw; 
             height: 100vh; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
         }
         canvas { 
-            width: 90%; 
-            height: 90%; 
+            display: block;
         }
         .status {
             position: absolute;
             bottom: 20px;
             right: 20px;
             font-size: 12px;
-            color: #666;
+            color: #555;
+            background: rgba(0,0,0,0.5);
+            padding: 5px 10px;
+            border-radius: 5px;
         }
     </style>
 </head>
@@ -38,77 +40,66 @@
     <div id="canvas-container">
         <canvas id="nube-canvas"></canvas>
     </div>
-    <div class="status" id="status">Cargando datos...</div>
+    <div class="status" id="status">Iniciando...</div>
 
     <script>
-        // 1. PEGA AQUÍ TU URL DE GOOGLE APPS SCRIPT
+        // 1. REEMPLAZA ESTO CON TU URL DE GOOGLE APPS SCRIPT
         const scriptURL = 'https://script.google.com/macros/s/AKfycbwqSampDqH4sEgA9aofhPJ0satdIF9VJM7BfKIOl-nxKM82zOOIZqZIrxNTP16lE2KO2Q/exec';
 
         async function dibujarNube() {
-            document.getElementById('status').innerText = "Actualizando...";
+            const statusTag = document.getElementById('status');
+            const canvas = document.getElementById('nube-canvas');
+            
             try {
                 const response = await fetch(scriptURL);
-                const list = await response.json(); // Recibe el array [palabra, hits]
+                const list = await response.json(); 
 
-                if (list.length === 0) {
-                    document.getElementById('status').innerText = "Esperando respuestas del Form...";
+                if (!list || list.length === 0) {
+                    statusTag.innerText = "Esperando datos del Form...";
                     return;
                 }
 
-                // Ajuste de tamaño automático
+                // --- AJUSTE DE ALTA RESOLUCIÓN (ANTI-PIXEL) ---
+                const scale = window.devicePixelRatio || 1;
+                canvas.width = window.innerWidth * scale;
+                canvas.height = window.innerHeight * scale;
+                canvas.style.width = window.innerWidth + 'px';
+                canvas.style.height = window.innerHeight + 'px';
+
+                // Cálculo de tamaño de fuente
                 const maxHits = Math.max(...list.map(d => d[1]));
-                // Factor para que las palabras no se salgan de la pantalla
-                const factor = (window.innerWidth < 600) ? 15 : 30;
-                const weightFactor = (factor / maxHits);
-                
-                const weightFactor = (factor / maxHits);
+                // Si las letras salen muy chicas, sube este 60 a 80 o 100
+                const weightFactor = (60 / maxHits) * scale; 
 
-        const canvas = document.getElementById('nube-canvas');
-        const scale = window.devicePixelRatio || 1;
-
-        // Ajustamos la resolución interna
-        canvas.width = window.innerWidth * scale;
-        canvas.height = window.innerHeight * scale;
-
-        // Ajustamos el tamaño visual
-        canvas.style.width = window.innerWidth + 'px';
-        canvas.style.height = window.innerHeight + 'px';
-
-        WordCloud(canvas, {
-            list: list,
-            gridSize: 10 * scale,
-            weightFactor: weightFactor * scale,
-            color: 'random-light',
-            rotateRatio: 0.3,
-            rotationSteps: 2,
-            backgroundColor: '#1a1a1a',
-            fontFamily: 'Inter, sans-serif' // Fuente más nítida
-        });
-
-                WordCloud(document.getElementById('nube-canvas'), {
+                // --- DIBUJAR NUBE ---
+                WordCloud(canvas, {
                     list: list,
-                    gridSize: 10,
+                    gridSize: 8 * scale,
                     weightFactor: weightFactor,
-                    color: 'random-light', // Colores brillantes sobre fondo oscuro
-                    rotateRatio: 0.3,
+                    color: 'random-light',
+                    rotateRatio: 0.4,
                     rotationSteps: 2,
                     backgroundColor: '#1a1a1a',
-                    shuffle: false,
-                    fontFamily: 'Impact, sans-serif'
+                    fontFamily: 'Segoe UI, Roboto, sans-serif',
+                    shuffle: true
                 });
 
-                document.getElementById('status').innerText = "Última actualización: " + new Date().toLocaleTimeString();
+                statusTag.innerText = "Sincronizado: " + new Date().toLocaleTimeString();
+
             } catch (error) {
                 console.error("Error:", error);
-                document.getElementById('status').innerText = "Error de conexión";
+                statusTag.innerText = "Error de conexión o URL inválida";
             }
         }
 
-        // Ejecutar al abrir
+        // Ejecución inicial
         dibujarNube();
 
-        // Refrescar cada 30 segundos automáticamente
+        // Refrescar cada 30 segundos
         setInterval(dibujarNube, 30000);
+
+        // Re-dibujar si cambian el tamaño de la ventana
+        window.onresize = dibujarNube;
     </script>
 </body>
 </html>
