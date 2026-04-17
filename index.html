@@ -61,30 +61,26 @@
                 const factor = (window.innerWidth < 600) ? 15 : 30;
                 const weightFactor = (factor / maxHits);
 
-                WordCloud(document.getElementById('nube-canvas'), {
-                    list: list,
-                    gridSize: 10,
-                    weightFactor: weightFactor,
-                    color: 'random-light', // Colores brillantes sobre fondo oscuro
-                    rotateRatio: 0.3,
-                    rotationSteps: 2,
-                    backgroundColor: '#1a1a1a',
-                    shuffle: false,
-                    fontFamily: 'Impact, sans-serif'
-                });
+                const weightFactor = (factor / maxHits);
 
-                document.getElementById('status').innerText = "Última actualización: " + new Date().toLocaleTimeString();
-            } catch (error) {
-                console.error("Error:", error);
-                document.getElementById('status').innerText = "Error de conexión";
-            }
-        }
+        const canvas = document.getElementById('nube-canvas');
+        const scale = window.devicePixelRatio || 1;
 
-        // Ejecutar al abrir
-        dibujarNube();
+        // Ajustamos la resolución interna
+        canvas.width = window.innerWidth * scale;
+        canvas.height = window.innerHeight * scale;
 
-        // Refrescar cada 30 segundos automáticamente
-        setInterval(dibujarNube, 30000);
-    </script>
-</body>
-</html>
+        // Ajustamos el tamaño visual
+        canvas.style.width = window.innerWidth + 'px';
+        canvas.style.height = window.innerHeight + 'px';
+
+        WordCloud(canvas, {
+            list: list,
+            gridSize: 10 * scale,
+            weightFactor: weightFactor * scale,
+            color: 'random-light',
+            rotateRatio: 0.3,
+            rotationSteps: 2,
+            backgroundColor: '#1a1a1a',
+            fontFamily: 'Inter, sans-serif' // Fuente más nítida
+        });
