@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nube de Palabras Arena Viva</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/wordcloud2.js/1.2.2/wordcloud2.min.js"></script>
+    <style>
+        body { margin: 0; background-color: #1a1a1a; color: white; font-family: sans-serif; overflow: hidden; }
+        #canvas-container { width: 100vw; height: 100vh; display: flex; justify-content: center; align-items: center; }
+        .status { position: absolute; bottom: 20px; right: 20px; font-size: 12px; color: #555; }
+    </style>
+</head>
+<body>
+    <div id="canvas-container"><canvas id="nube-canvas"></canvas></div>
+    <div class="status" id="status">Iniciando...</div>
+
+    <script>
+        // 1. REEMPLAZA ESTA URL POR LA TUYA DE GOOGLE (LA QUE TERMINA EN /exec)
+        const scriptURL = 'https://script.google.com/macros/s/AKfycbwqSampDqH4sEgA9aofhPJ0satdIF9VJM7BfKIOl-nxKM82zOOIZqZIrxNTP16lE2KO2Q/exec';
+
+        async function dibujarNube() {
+            const statusTag = document.getElementById('status');
+            const canvas = document.getElementById('nube-canvas');
+            
+            try {
+                const response = await fetch(scriptURL);
+                const list = await response.json(); 
+
+                if (!list || list.length === 0) {
+                    statusTag.innerText = "Esperando datos del Form...";
+                    return;
+                }
+
+                // Ajuste de alta resolución
+                const scale = window.devicePixelRatio || 1;
+                canvas.width = window.innerWidth * scale;
+                canvas.height = window.innerHeight * scale;
+                canvas.style.width = window.innerWidth + 'px';
+                canvas.style.height = window.innerHeight + 'px';
+
+                // Cálculo de tamaño (Solo una vez)
+                const maxHits = Math.max(...list.map(d => d[1]));
+                const miFactorDeTamaño = (80 / maxHits) * scale; 
+
+                WordCloud(canvas, {
+                    list: list,
+                    gridSize: 10 * scale,
+                    weightFactor: miFactorDeTamaño, // Aquí usamos la variable corregida
+                    color: 'random-light',
+                    rotateRatio: 0.3,
+                    backgroundColor: '#1a1a1a',
+                    fontFamily: 'Segoe UI, Tahoma, sans-serif'
+                });
+
+                statusTag.innerText = "Actualizado: " + new Date().toLocaleTimeString();
+            } catch (error) {
+                statusTag.innerText = "Error de conexión";
+                console.error(error);
+            }
+        }
+
+        dibujarNube();
+        setInterval(dibujarNube, 30000); // Se actualiza solo cada 30 segundos
+        window.onresize = dibujarNube;
+    </script>
+</body>
+</html>
